@@ -8,7 +8,7 @@ class HelpdeskUI:
         self.root = root
         self.manager = manager
 
-        self.root.title("IT Helpdesk System - Gestión de tickets")
+        self.root.title("My help desk tickets systemgi")
         self.root.geometry("950x650")
         self.root.minsize(900, 600)
 
