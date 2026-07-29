@@ -9,8 +9,8 @@ class HelpdeskUI:
         self.manager = manager
 
         self.root.title("IT Helpdesk System - Gestión de tickets")
-        self.root.geometry("920x620")
-        self.root.minsize(800, 500)
+        self.root.geometry("950x650")
+        self.root.minsize(900, 600)
 
         # Aplicar estilos
         self.style = ttk.Style()
