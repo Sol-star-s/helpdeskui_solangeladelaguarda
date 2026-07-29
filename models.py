@@ -1,131 +1,134 @@
-#models.py
-#Módulo encargado de la capa de datos y la lógica de negocio
-
 import json
-from pathlib import Path
-from typing import List, Dict, Optional
+import os
+from datetime import datetime
+from typing import List, Optional, Dict
 
 class Ticket:
- # Representa una entidad individual de Ticket de soporte
-
-  def __init__(self, ticket_id: int, usuario: str, descripcion: str,
-                categoria: str, prioridad: str, estado: str = "Pendiente"):
-     self.id = ticket_id
-     self.usuario = usuario
-     self.descripcion = descripcion
-     self.categoria = categoria
-     self.prioridad = prioridad
-     self.estado = estado
-
-  def to_dict(self) -> Dict:
-    """ Serializa el objeto a diccionario para guardalo en JSON"""
-    return{
-      "Id":self.id,
-      "Usuario": self.usuarios,
-      "descripcion": self.descripcion,
-      "categoria": self.categoria,
-      "prioridad": self.prioridad,
-      "estado": self.estado
-    }  
-
-  @classmethod
-  def from_dict(cls, data: Dict) -> 'Ticket':
-    """Deserializa un diccionario JSON en un objeto Ticket"""
-    return cls(
-       Ticket_id = data["id"],
-       usuario = data["usuario"],
-       descripcion = data["descripcion"],
-       categoria=data["categoria"],
-       prioridad = data["prioridad"],
-       estado = data.get("Estado", "Pendiente")
-
-    )
-
+    """Clase que representa un ticket de soporte"""
+    def __init__(self, id: int, usuario: str, descripcion: str, 
+                 categoria: str, prioridad: str, estado: str = "Pendiente"):
+        self.id = id
+        self.usuario = usuario
+        self.descripcion = descripcion
+        self.categoria = categoria
+        self.prioridad = prioridad
+        self.estado = estado
+        self.fecha_creacion = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    def to_dict(self) -> dict:
+        """Convierte el ticket a diccionario para JSON"""
+        return {
+            "id": self.id,
+            "usuario": self.usuario,
+            "descripcion": self.descripcion,
+            "categoria": self.categoria,
+            "prioridad": self.prioridad,
+            "estado": self.estado,
+            "fecha_creacion": self.fecha_creacion
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Crea un ticket desde un diccionario"""
+        ticket = cls(
+            id=data["id"],
+            usuario=data["usuario"],
+            descripcion=data["descripcion"],
+            categoria=data["categoria"],
+            prioridad=data["prioridad"],
+            estado=data.get("estado", "Pendiente")
+        )
+        ticket.fecha_creacion = data.get("fecha_creacion", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        return ticket
 
 class TicketManager:
- #gestor encargado del CRUD y la persistencia en el archivo JSON
-
-   def __init__(self, filepath: str= "tickets.json"):
-     self. filepath = Path(filepath)
-     self.tickets: list[Ticket] = []
-     self.cargar_datos()
-
-   def cargar_datos(self) -> None:  
-     #Cargar los tickets desde el archivo JSON si exite
-     if not self.filepath.exists():
-        self.tickets = []
-        return
-     try:
-       with open(self.filepath, "r", encoding="utf-8") as file:
-                 data= json.load(file)
-                 self.tickets = [Ticket.from_dict(item) for item in data]
-                 
-     except(json.JSONDecodeError, KeyError):
-        self.tickets=[]
-
-   def guardar_datos(self) -> None:
-      """Persiste la lista actual de tickets en el archivo JSON"""
-      try:
-         with open(self.filepath, "w", encoding="utf-8") as file:
-            data = [ticket.to_dict() for ticket in self.tickets]
-            json.dump(data, file, indent=4, ensure_ascii=False)
-      except IOError as e:
-         raise Exception(f"Error al escribir en el disco: {e}")
-
-   def crear_ticket(self, usuario: str, descripcion: str, categoria: str, prioridad:str) -> Ticket:
-      """Genera un nuevo ticket con ID autoincremental y lo guarda"""
-      nuevo_id = 1 if not self.tickets else max(t.id for t in self.tickets)+1
-      nuevo_ticket = Ticket(
-             ticket_id=nuevo_id,
-             usuario=usuario,
-             descripcion=descripcion,
-             categoria=categoria,
-             prioridad=prioridad 
-      )
-      self.tickets.append(nuevo_ticket)
-      self.guardar_datos()
-      return nuevo_ticket
-
-   def cambiar_estado(self, ticket_id: int) -> Optional[Ticket]:
-      """Alterna el estado del ticket entre Pendiente y Resuelto"""
-      ticket = self.obtener_por_id(ticket_id)
-      if ticket:
-         ticket.estado = "Resuelto" if ticket.estado =="Pendiente" else "Pendiente"
-         self.guardar_datos()
-         return ticket
-      return None  
-
-
-   def eliminar_ticket(self, ticket_id: int) -> bool:
-      """ELiminar un ticket por su ID"""
-      ticket = self.obtener_por_id(ticket_id)
-      if ticket:
-         self.tickets.remove(ticket)
-         self-self.guardar_datos()
-         return True
-      return False
-
-   def obtener_por_id(self, ticket_id: int) -> Optional[Ticket]:
-      """Buscar y retorna un ticket especifico"""
-      for ticket in self.tickets:
-         if ticket.id == ticket_id:
-            return ticket
-      return None
-
-   def buscar_tickets(self, criterio: str = "") -> List[Ticket]:
-      """Filtrar los tickets por cualquier campo coincidente"""
-      if not criterio:
-         return self.tickets
-      criterio_lower = criterio.lower()
-      return [
-         t for t in self.tickets
-         if criterio_lower in f"{t.usuario} {t.descripcion} {t.categoria} {t.prioridad} {t.estado}".lower()
-      ]        
-
-
-   def obtener_metrica(self) -> Dict[str, int]:
-      """Retornar estadisticas clave del conjunto de datos para finalizar el cambio hola """
-
-
-   
-   
+    """Gestiona la creación, almacenamiento y búsqueda de tickets"""
+    def __init__(self, archivo_json: str = "tickets.json"):
+        self.archivo_json = archivo_json
+        self.tickets: List[Ticket] = []
+        self._cargar_datos()
+    
+    def _cargar_datos(self):
+        """Carga los tickets desde el archivo JSON"""
+        if os.path.exists(self.archivo_json):
+            try:
+                with open(self.archivo_json, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.tickets = [Ticket.from_dict(t) for t in data]
+            except (json.JSONDecodeError, FileNotFoundError):
+                self.tickets = []
+        else:
+            self.tickets = []
+    
+    def _guardar_datos(self):
+        """Guarda los tickets en el archivo JSON"""
+        with open(self.archivo_json, 'w', encoding='utf-8') as f:
+            json.dump([t.to_dict() for t in self.tickets], f, indent=2, ensure_ascii=False)
+    
+    def _generar_id(self) -> int:
+        """Genera un nuevo ID para el ticket"""
+        if not self.tickets:
+            return 1
+        return max(t.id for t in self.tickets) + 1
+    
+    def crear_ticket(self, usuario: str, descripcion: str, 
+                     categoria: str, prioridad: str) -> Ticket:
+        """Crea un nuevo ticket"""
+        ticket = Ticket(
+            id=self._generar_id(),
+            usuario=usuario,
+            descripcion=descripcion,
+            categoria=categoria,
+            prioridad=prioridad,
+            estado="Pendiente"
+        )
+        self.tickets.append(ticket)
+        self._guardar_datos()
+        return ticket
+    
+    def cambiar_estado(self, ticket_id: int) -> bool:
+        """Cambia el estado de un ticket (Pendiente -> Resuelto)"""
+        for ticket in self.tickets:
+            if ticket.id == ticket_id:
+                if ticket.estado == "Pendiente":
+                    ticket.estado = "Resuelto"
+                else:
+                    ticket.estado = "Pendiente"
+                self._guardar_datos()
+                return True
+        return False
+    
+    def eliminar_ticket(self, ticket_id: int) -> bool:
+        """Elimina un ticket por su ID"""
+        for i, ticket in enumerate(self.tickets):
+            if ticket.id == ticket_id:
+                del self.tickets[i]
+                self._guardar_datos()
+                return True
+        return False
+    
+    def buscar_tickets(self, criterio: str = "") -> List[Ticket]:
+        """Busca tickets que coincidan con el criterio"""
+        if not criterio:
+            return self.tickets.copy()
+        
+        criterio_lower = criterio.lower()
+        resultados = []
+        for ticket in self.tickets:
+            if (criterio_lower in ticket.usuario.lower() or
+                criterio_lower in ticket.descripcion.lower() or
+                criterio_lower in ticket.categoria.lower() or
+                criterio_lower in ticket.estado.lower()):
+                resultados.append(ticket)
+        return resultados
+    
+    def obtener_metricas(self) -> Dict[str, int]:
+        """Obtiene métricas de los tickets"""
+        total = len(self.tickets)
+        pendientes = sum(1 for t in self.tickets if t.estado == "Pendiente")
+        resueltos = sum(1 for t in self.tickets if t.estado == "Resuelto")
+        return {
+            "total": total,
+            "pendientes": pendientes,
+            "resueltos": resueltos
+        }

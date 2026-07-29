@@ -1,20 +1,24 @@
+# Creamos la ventana principal
 import tkinter as tk
 from tkinter import ttk, messagebox
 from models import TicketManager
 
 class HelpdeskUI:
-    # Construye y gestiona los componentes de la interfaz de usuario
+    # Construcción y gestión  de los componentes de la interfaz de usuario
+    #1. Le damos un título a nuestra ventana
+    #2.Configuramos el tamaño de la ventana (ancho x alto)
+    
     def __init__(self, root: tk.Tk, manager: TicketManager):
         self.root = root
         self.manager = manager
 
-        self.root.title("My help desk tickets systemgi")
+        self.root.title("My tickets system help desk ")
         self.root.geometry("950x650")
         self.root.minsize(900, 600)
 
         # Aplicar estilos
         self.style = ttk.Style()
-        self.style.theme_use("clam")
+        self.style.theme_use("classic")
 
         self._crear_interfaz()
         self.actualizar_tabla()
@@ -25,8 +29,8 @@ class HelpdeskUI:
         header.pack(fill=tk.X)
         ttk.Label(
             header,
-            text="Bienvenido Dashboard de soporte técnico",
-            font=("Segoe UI", 16, "bold")
+            text="Technical Support Dashbord",
+            font=( "Aldhabi", 16, "bold")
         ).pack(side=tk.LEFT)
 
         # Contenedor Principal
@@ -40,39 +44,39 @@ class HelpdeskUI:
         self._crear_panel_derecho(main_frame)
 
     def _crear_formulario(self, parent):
-        frame = ttk.LabelFrame(parent, text="Nuevo ticket", padding=15)
+        frame = ttk.LabelFrame(parent, text="New ticket", padding=15)
         frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))  
 
         # Campos 
-        ttk.Label(frame, text="Usuario / Solicitante").pack(anchor=tk.W, pady=(0, 5))
-        self.ent_usuario = ttk.Entry(frame, width=25)
-        self.ent_usuario.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(frame, text="User").pack(anchor=tk.W, pady=(2, 6))
+        self.ent_usuario = ttk.Entry(frame, width=20)
+        self.ent_usuario.pack(fill=tk.X, pady=(2, 10))
 
-        ttk.Label(frame, text="Descripción").pack(anchor=tk.W, pady=(0, 5))
-        self.ent_descripcion = ttk.Entry(frame, width=25)
-        self.ent_descripcion.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(frame, text="Description").pack(anchor=tk.W, pady=(2, 6))
+        self.ent_descripcion = ttk.Entry(frame, width=20)
+        self.ent_descripcion.pack(fill=tk.X, pady=(2, 10))
 
-        ttk.Label(frame, text="Categoría").pack(anchor=tk.W, pady=(0, 5))
+        ttk.Label(frame, text="Category").pack(anchor=tk.W, pady=(2, 6))
         self.cmb_categoria = ttk.Combobox(
             frame,
-            values=["Hardware", "Software", "Redes/Conectividad", "Accesos/Permisos"],
+            values=["Hardware", "Software", "Networks", "Access"],
             state="readonly"
         )
         self.cmb_categoria.set("Hardware")
         self.cmb_categoria.pack(fill=tk.X, pady=(0, 10))
 
-        ttk.Label(frame, text="Prioridad").pack(anchor=tk.W, pady=(0, 5))
+        ttk.Label(frame, text="Priority").pack(anchor=tk.W, pady=(0, 5))
         self.cmb_prioridad = ttk.Combobox(
             frame,
-            values=["Baja", "Media", "Alta", "Crítica"],
+            values=["Low", "Medium", "Hight", "Critical"],
             state="readonly"
         )
-        self.cmb_prioridad.set("Baja")
+        self.cmb_prioridad.set("Low")
         self.cmb_prioridad.pack(fill=tk.X, pady=(0, 10))
 
-        # Botones
-        ttk.Button(frame, text="Crear Ticket", command=self._on_crear).pack(fill=tk.X, pady=(0, 5))
-        ttk.Button(frame, text="Limpiar Campos", command=self._limpiar_formulario).pack(fill=tk.X)
+        # Creo y posiciono los botones
+        ttk.Button(frame, text="Create Ticket", command=self._on_crear).pack(fill=tk.X, pady=(0, 5))
+        ttk.Button(frame, text="Delete Fields", command=self._limpiar_formulario).pack(fill=tk.X)
 
     def _crear_panel_derecho(self, parent):
         right_frame = ttk.Frame(parent)
@@ -91,22 +95,22 @@ class HelpdeskUI:
         tree_frame = ttk.Frame(right_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True)
 
-        columns = ("id", "usuario", "descripcion", "categoria", "prioridad", "estado")
+        columns = ("id", "user", "description", "category", "priority", "status")
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", selectmode="browse")
 
         self.tree.heading("id", text="ID")
-        self.tree.heading("usuario", text="Usuario")
-        self.tree.heading("descripcion", text="Descripción")
-        self.tree.heading("categoria", text="Categoría")
-        self.tree.heading("prioridad", text="Prioridad")
-        self.tree.heading("estado", text="Estado")
+        self.tree.heading("user", text="User")
+        self.tree.heading("description", text="Description")
+        self.tree.heading("category", text="Category")
+        self.tree.heading("priority", text="Priority")
+        self.tree.heading("status", text="Status")
 
         self.tree.column("id", width=40, anchor=tk.CENTER)
-        self.tree.column("usuario", width=120)
-        self.tree.column("descripcion", width=200)
-        self.tree.column("categoria", width=120)
-        self.tree.column("prioridad", width=80, anchor=tk.CENTER)
-        self.tree.column("estado", width=80, anchor=tk.CENTER)
+        self.tree.column("user", width=120)
+        self.tree.column("description", width=200)
+        self.tree.column("category", width=120)
+        self.tree.column("priority", width=80, anchor=tk.CENTER)
+        self.tree.column("status", width=80, anchor=tk.CENTER)
 
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscroll=scrollbar.set)
